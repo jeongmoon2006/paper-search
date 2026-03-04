@@ -1,16 +1,25 @@
 from pocketflow import Flow
-from nodes import GetQuestionNode, AnswerNode
 
-def create_qa_flow():
-    """Create and return a question-answering flow."""
-    # Create nodes
-    get_question_node = GetQuestionNode()
-    answer_node = AnswerNode()
-    
-    # Connect nodes in sequence
-    get_question_node >> answer_node
-    
-    # Create flow starting with input node
-    return Flow(start=get_question_node)
+from nodes import (
+    PaperSummaryMapNode,
+    QueryRefinementNode,
+    ScholarSearchNode,
+    SynthesisNode,
+)
 
-qa_flow = create_qa_flow()
+
+def create_research_flow():
+    query_refinement_node = QueryRefinementNode(max_retries=2)
+    scholar_search_node = ScholarSearchNode(max_retries=2)
+    paper_summary_map_node = PaperSummaryMapNode(max_retries=2)
+    synthesis_node = SynthesisNode(max_retries=2)
+
+    query_refinement_node - "search" >> scholar_search_node
+    scholar_search_node - "refine_again" >> query_refinement_node
+    scholar_search_node - "summarize" >> paper_summary_map_node
+    paper_summary_map_node >> synthesis_node
+
+    return Flow(start=query_refinement_node)
+
+
+research_flow = create_research_flow()
